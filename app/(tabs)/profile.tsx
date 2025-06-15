@@ -3,22 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
-import { 
-  User, 
-  Phone, 
-  CreditCard, 
-  MapPin, 
-  LogOut, 
-  CircleHelp as HelpCircle,
-  Settings,
-  Bell,
-  Shield,
-  Globe,
-  FileText,
-  Star,
-  Edit,
-  Mail
-} from 'lucide-react-native';
+import { User, Phone, CreditCard, MapPin, LogOut, CircleHelp as HelpCircle, Settings, Bell, Shield, Globe, FileText, Star, CreditCard as Edit, Mail } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();

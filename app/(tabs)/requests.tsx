@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Calendar, Clock, MapPin, Phone, CheckCircle, XCircle, User, X } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Phone, CircleCheck as CheckCircle, Circle as XCircle, User, X } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ServiceRequest {

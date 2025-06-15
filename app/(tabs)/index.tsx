@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Plus, CheckCircle } from 'lucide-react-native';
+import { Plus, CircleCheck as CheckCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();

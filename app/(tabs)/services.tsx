@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Edit, Eye, CheckCircle } from 'lucide-react-native';
+import { CreditCard as Edit, Eye, CircleCheck as CheckCircle } from 'lucide-react-native';
 
 export default function ServicesScreen() {
   const router = useRouter();
