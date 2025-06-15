@@ -7,6 +7,8 @@ interface User {
   aadharNumber: string;
   isAdmin: boolean;
   registeredServices: string[];
+  fullName?: string;
+  email?: string;
 }
 
 interface AuthContextType {

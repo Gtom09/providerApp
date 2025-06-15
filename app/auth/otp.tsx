@@ -8,7 +8,7 @@ export default function OTPVerification() {
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(30);
   const router = useRouter();
-  const { phone } = useLocalSearchParams();
+  const { phone, isLogin, fullName, email } = useLocalSearchParams();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,7 +28,7 @@ export default function OTPVerification() {
     if (otp === '123456') {
       router.push({
         pathname: '/auth/aadhar',
-        params: { phone }
+        params: { phone, isLogin, fullName, email }
       });
     } else {
       Alert.alert('Error', 'Invalid OTP. Please try again.');

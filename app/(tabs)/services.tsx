@@ -4,57 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Edit, Eye, Clock, CheckCircle, XCircle } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface ServiceStatus {
-  id: string;
-  status: 'pending' | 'verified' | 'rejected';
-  submittedAt: string;
-}
+import { Edit, Eye, CheckCircle } from 'lucide-react-native';
 
 export default function ServicesScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const [serviceStatuses, setServiceStatuses] = useState<ServiceStatus[]>([]);
-
-  useEffect(() => {
-    loadServiceStatuses();
-  }, []);
-
-  const loadServiceStatuses = async () => {
-    try {
-      const statuses = await AsyncStorage.getItem(`service_statuses_${user?.id}`);
-      if (statuses) {
-        setServiceStatuses(JSON.parse(statuses));
-      } else {
-        // Initialize statuses for registered services
-        const initialStatuses = user?.registeredServices.map(serviceId => ({
-          id: serviceId,
-          status: 'pending' as const,
-          submittedAt: new Date().toISOString(),
-        })) || [];
-        
-        setServiceStatuses(initialStatuses);
-        await AsyncStorage.setItem(`service_statuses_${user?.id}`, JSON.stringify(initialStatuses));
-      }
-    } catch (error) {
-      console.error('Error loading service statuses:', error);
-    }
-  };
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { icon: Clock, color: '#F59E0B', text: 'Pending Review' };
-      case 'verified':
-        return { icon: CheckCircle, color: '#10B981', text: 'Verified' };
-      case 'rejected':
-        return { icon: XCircle, color: '#EF4444', text: 'Rejected' };
-      default:
-        return { icon: Clock, color: '#6B7280', text: 'Unknown' };
-    }
-  };
 
   const registeredServices = SERVICE_CATEGORIES.filter(service => 
     user?.registeredServices.includes(service.id)
@@ -88,51 +42,42 @@ export default function ServicesScreen() {
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.servicesList}>
-          {registeredServices.map((service) => {
-            const serviceStatus = serviceStatuses.find(s => s.id === service.id);
-            const status = serviceStatus?.status || 'pending';
-            const statusInfo = getStatusInfo(status);
-            const StatusIcon = statusInfo.icon;
-
-            return (
-              <View key={service.id} style={styles.serviceCard}>
-                <View style={styles.serviceHeader}>
-                  <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceIcon}>{service.icon}</Text>
-                    <View style={styles.serviceDetails}>
-                      <Text style={styles.serviceName}>{service.name}</Text>
-                      <Text style={styles.serviceDescription}>{service.description}</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
-                    <StatusIcon size={16} color={statusInfo.color} />
-                    <Text style={[styles.statusText, { color: statusInfo.color }]}>
-                      {statusInfo.text}
-                    </Text>
+          {registeredServices.map((service) => (
+            <View key={service.id} style={styles.serviceCard}>
+              <View style={styles.serviceHeader}>
+                <View style={styles.serviceInfo}>
+                  <Text style={styles.serviceIcon}>{service.icon}</Text>
+                  <View style={styles.serviceDetails}>
+                    <Text style={styles.serviceName}>{service.name}</Text>
+                    <Text style={styles.serviceDescription}>{service.description}</Text>
                   </View>
                 </View>
-
-                <View style={styles.serviceActions}>
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/service-registration/${service.id}?mode=view`)}
-                  >
-                    <Eye size={16} color="#6B7280" />
-                    <Text style={styles.actionButtonText}>View</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/service-registration/${service.id}?mode=edit`)}
-                  >
-                    <Edit size={16} color="#3B82F6" />
-                    <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Edit</Text>
-                  </TouchableOpacity>
+                
+                <View style={styles.statusBadge}>
+                  <CheckCircle size={16} color="#10B981" />
+                  <Text style={styles.statusText}>Active</Text>
                 </View>
               </View>
-            );
-          })}
+
+              <View style={styles.serviceActions}>
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => router.push(`/service-registration/${service.id}?mode=view`)}
+                >
+                  <Eye size={16} color="#6B7280" />
+                  <Text style={styles.actionButtonText}>View</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => router.push(`/service-registration/${service.id}?mode=edit`)}
+                >
+                  <Edit size={16} color="#3B82F6" />
+                  <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -212,11 +157,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     alignSelf: 'flex-start',
+    backgroundColor: '#10B981' + '20',
   },
   statusText: {
     fontSize: 12,
     fontFamily: 'Inter-Medium',
     marginLeft: 6,
+    color: '#10B981',
   },
   serviceActions: {
     flexDirection: 'row',

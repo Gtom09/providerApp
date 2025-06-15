@@ -1,23 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Phone } from 'lucide-react-native';
+import { Phone, UserPlus, LogIn } from 'lucide-react-native';
 
-export default function MobileAuth() {
-  const [phone, setPhone] = useState('');
+export default function AuthHome() {
   const router = useRouter();
 
-  const handleSendOTP = () => {
-    if (phone.length !== 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
-      return;
-    }
-    
-    router.push({
-      pathname: '/auth/otp',
-      params: { phone }
-    });
+  const handleLogin = () => {
+    router.push('/auth/login');
+  };
+
+  const handleSignup = () => {
+    router.push('/auth/signup');
   };
 
   const handleAdminLogin = () => {
@@ -28,27 +23,22 @@ export default function MobileAuth() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Phone size={48} color="#3B82F6" />
-          <Text style={styles.title}>Service Provider Registration</Text>
-          <Text style={styles.subtitle}>Enter your mobile number to get started</Text>
+          <Phone size={64} color="#3B82F6" />
+          <Text style={styles.title}>Welcome to ServicePro</Text>
+          <Text style={styles.subtitle}>
+            Join thousands of service providers and grow your business
+          </Text>
         </View>
 
-        <View style={styles.form}>
-          <Text style={styles.label}>Mobile Number</Text>
-          <View style={styles.phoneContainer}>
-            <Text style={styles.countryCode}>+91</Text>
-            <TextInput
-              style={styles.phoneInput}
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="Enter 10-digit mobile number"
-              keyboardType="numeric"
-              maxLength={10}
-            />
-          </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+            <LogIn size={20} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>Login</Text>
+          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleSendOTP}>
-            <Text style={styles.primaryButtonText}>Send OTP</Text>
+          <TouchableOpacity style={styles.secondaryButton} onPress={handleSignup}>
+            <UserPlus size={20} color="#3B82F6" />
+            <Text style={styles.secondaryButtonText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
 
@@ -75,69 +65,58 @@ const styles = StyleSheet.create({
     marginBottom: 48,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-    marginTop: 16,
+    marginTop: 24,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
-    marginTop: 8,
+    marginTop: 12,
     textAlign: 'center',
+    lineHeight: 24,
   },
-  form: {
+  buttonContainer: {
+    gap: 16,
     marginBottom: 32,
   },
-  label: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  phoneContainer: {
+  primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 12,
-    backgroundColor: '#F9FAFB',
-    marginBottom: 24,
-  },
-  countryCode: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#374151',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRightWidth: 1,
-    borderRightColor: '#D1D5DB',
-  },
-  phoneInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#374151',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  primaryButton: {
+    justifyContent: 'center',
     backgroundColor: '#3B82F6',
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
     shadowColor: '#3B82F6',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
+    gap: 8,
   },
   primaryButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     color: '#FFFFFF',
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F9FF',
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+    gap: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: '#3B82F6',
   },
   adminButton: {
     alignItems: 'center',
@@ -146,6 +125,6 @@ const styles = StyleSheet.create({
   adminButtonText: {
     fontSize: 16,
     fontFamily: 'Inter-Medium',
-    color: '#3B82F6',
+    color: '#6B7280',
   },
 });

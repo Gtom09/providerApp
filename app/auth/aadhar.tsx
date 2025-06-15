@@ -7,14 +7,26 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function AadharVerification() {
   const [aadharNumber, setAadharNumber] = useState('');
+  const [aadharOtp, setAadharOtp] = useState('');
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
-  const { phone } = useLocalSearchParams();
+  const { phone, isLogin, fullName, email } = useLocalSearchParams();
   const { login } = useAuth();
 
-  const handleVerifyAadhar = async () => {
+  const handleSendAadharOTP = () => {
     if (aadharNumber.length !== 12) {
       Alert.alert('Error', 'Please enter a valid 12-digit Aadhar number');
+      return;
+    }
+
+    setShowOtpInput(true);
+    Alert.alert('OTP Sent', 'OTP has been sent to your registered mobile number with Aadhar');
+  };
+
+  const handleVerifyAadhar = async () => {
+    if (aadharOtp.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit OTP');
       return;
     }
 
@@ -31,6 +43,8 @@ export default function AadharVerification() {
         aadharNumber,
         isAdmin: false,
         registeredServices: [],
+        fullName: fullName as string || '',
+        email: email as string || '',
       };
 
       await login(userData);
@@ -62,17 +76,40 @@ export default function AadharVerification() {
             placeholder="Enter 12-digit Aadhar number"
             keyboardType="numeric"
             maxLength={12}
+            editable={!showOtpInput}
           />
 
-          <TouchableOpacity 
-            style={[styles.primaryButton, isVerifying && styles.disabledButton]} 
-            onPress={handleVerifyAadhar}
-            disabled={isVerifying}
-          >
-            <Text style={styles.primaryButtonText}>
-              {isVerifying ? 'Verifying...' : 'Verify Aadhar'}
-            </Text>
-          </TouchableOpacity>
+          {!showOtpInput ? (
+            <TouchableOpacity 
+              style={styles.primaryButton} 
+              onPress={handleSendAadharOTP}
+            >
+              <Text style={styles.primaryButtonText}>Send OTP</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <Text style={styles.label}>Aadhar OTP</Text>
+              <TextInput
+                style={styles.otpInput}
+                value={aadharOtp}
+                onChangeText={setAadharOtp}
+                placeholder="Enter 6-digit OTP"
+                keyboardType="numeric"
+                maxLength={6}
+                textAlign="center"
+              />
+
+              <TouchableOpacity 
+                style={[styles.primaryButton, isVerifying && styles.disabledButton]} 
+                onPress={handleVerifyAadhar}
+                disabled={isVerifying}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {isVerifying ? 'Verifying...' : 'Verify Aadhar'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         <View style={styles.securityNote}>
@@ -80,6 +117,12 @@ export default function AadharVerification() {
             🔒 Your Aadhar information is encrypted and securely stored
           </Text>
         </View>
+
+        {showOtpInput && (
+          <View style={styles.hint}>
+            <Text style={styles.hintText}>Use OTP: 123456 for demo</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -138,6 +181,18 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginBottom: 24,
   },
+  otpInput: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#374151',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    paddingVertical: 16,
+    marginBottom: 24,
+    letterSpacing: 4,
+  },
   primaryButton: {
     backgroundColor: '#3B82F6',
     paddingVertical: 16,
@@ -162,11 +217,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: 16,
   },
   securityText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: '#166534',
     textAlign: 'center',
+  },
+  hint: {
+    backgroundColor: '#F0F9FF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  hintText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#1E40AF',
   },
 });

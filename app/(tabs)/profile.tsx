@@ -15,7 +15,9 @@ import {
   Shield,
   Globe,
   FileText,
-  Star
+  Star,
+  Edit,
+  Mail
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
@@ -37,6 +39,14 @@ export default function ProfileScreen() {
           }
         }
       ]
+    );
+  };
+
+  const handleEditProfile = () => {
+    Alert.alert(
+      'Edit Profile', 
+      'Profile editing feature will be available in the next update.',
+      [{ text: 'OK' }]
     );
   };
 
@@ -63,9 +73,6 @@ export default function ProfileScreen() {
       case 'rate':
         Alert.alert('Rate App', 'Thank you for using our app! Please rate us on the app store.');
         break;
-      case 'edit-profile':
-        Alert.alert('Edit Profile', 'Profile editing feature will be available in the next update.');
-        break;
       default:
         break;
     }
@@ -78,11 +85,35 @@ export default function ProfileScreen() {
           <View style={styles.profileIcon}>
             <User size={48} color="#3B82F6" />
           </View>
-          <Text style={styles.welcomeText}>Service Provider Profile</Text>
+          <Text style={styles.welcomeText}>{user?.fullName || 'Service Provider'}</Text>
+          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
+            <Edit size={16} color="#3B82F6" />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.profileInfo}>
           <View style={styles.infoCard}>
+            {user?.fullName && (
+              <View style={styles.infoRow}>
+                <User size={20} color="#6B7280" />
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Full Name</Text>
+                  <Text style={styles.infoValue}>{user.fullName}</Text>
+                </View>
+              </View>
+            )}
+
+            {user?.email && (
+              <View style={styles.infoRow}>
+                <Mail size={20} color="#6B7280" />
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Email Address</Text>
+                  <Text style={styles.infoValue}>{user.email}</Text>
+                </View>
+              </View>
+            )}
+
             <View style={styles.infoRow}>
               <Phone size={20} color="#6B7280" />
               <View style={styles.infoContent}>
@@ -114,16 +145,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Settings</Text>
           
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => handleSettingsAction('edit-profile')}
-          >
-            <User size={20} color="#6B7280" />
-            <Text style={styles.actionButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity 
             style={styles.actionButton}
             onPress={() => handleSettingsAction('notifications')}
@@ -196,7 +219,7 @@ export default function ProfileScreen() {
 
         <View style={styles.appInfo}>
           <Text style={styles.appVersion}>Version 1.0.0</Text>
-          <Text style={styles.copyright}>© 2024 Service Provider App</Text>
+          <Text style={styles.copyright}>© 2024 ServicePro</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -234,6 +257,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Inter-SemiBold',
     color: '#1F2937',
+    marginBottom: 12,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+    gap: 6,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#3B82F6',
   },
   profileInfo: {
     padding: 24,

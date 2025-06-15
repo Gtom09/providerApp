@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Plus } from 'lucide-react-native';
+import { Plus, CheckCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -24,8 +24,8 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Welcome, Provider!</Text>
-          <Text style={styles.subtitle}>Choose a service to register or manage</Text>
+          <Text style={styles.greeting}>Welcome, {user?.fullName || 'Provider'}!</Text>
+          <Text style={styles.subtitle}>Choose services to register or manage</Text>
         </View>
 
         <View style={styles.servicesGrid}>
@@ -49,6 +49,7 @@ export default function HomeScreen() {
                   <View style={styles.cardFooter}>
                     {isRegistered ? (
                       <View style={styles.statusBadge}>
+                        <CheckCircle size={12} color="#FFFFFF" />
                         <Text style={styles.statusText}>Registered</Text>
                       </View>
                     ) : (
@@ -114,8 +115,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   registeredCard: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#F0F9FF',
+    borderColor: '#10B981',
+    backgroundColor: '#F0FDF4',
   },
   cardContent: {
     alignItems: 'center',
@@ -146,10 +147,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusBadge: {
-    backgroundColor: '#3B82F6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
+    gap: 4,
   },
   statusText: {
     fontSize: 10,
