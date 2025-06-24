@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, UserPlus, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
+import { ArrowLeft, UserPlus, Eye, EyeOff, ArrowRight, User, Mail, Phone, Lock } from 'lucide-react-native';
 import { SafeView } from '@/components/SafeView';
 
 export default function SignUpScreen() {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,25 +22,28 @@ export default function SignUpScreen() {
     }
   }, [params.phone]);
 
-  const handleSendOTP = async () => {
+  const handleCreateAccount = async () => {
+    if (!fullName.trim()) {
+      Alert.alert('Missing Name', 'Please enter your full name.');
+      return;
+    }
+    if (!email.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
     if (phone.length !== 10) {
       Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number');
       return;
     }
-
     if (!password || password.length < 6) {
       Alert.alert('Invalid Password', 'Password must be at least 6 characters long');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
       return;
     }
-    
     setIsLoading(true);
-    
-    // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
       router.push({
@@ -60,44 +65,64 @@ export default function SignUpScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#374151" />
-          </TouchableOpacity>
-
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <UserPlus size={56} color="#3B82F6" />
-            </View>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
-              Join our network of trusted service professionals
+              Join our construction marketplace
             </Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Mobile Number</Text>
-            <View style={styles.phoneContainer}>
-              <View style={styles.countryCodeContainer}>
-                <Text style={styles.countryCode}>🇮🇳 +91</Text>
-              </View>
+            {/* Full Name */}
+            <View style={styles.inputContainer}>
+              <User size={20} color="#6B7280" style={styles.inputIcon} />
               <TextInput
-                style={styles.phoneInput}
+                style={styles.input}
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Full Name"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="words"
+                returnKeyType="next"
+              />
+            </View>
+            {/* Email */}
+            <View style={styles.inputContainer}>
+              <Mail size={20} color="#6B7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email address"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+            </View>
+            {/* Phone */}
+            <View style={styles.inputContainer}>
+              <Phone size={20} color="#6B7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
                 value={phone}
                 onChangeText={setPhone}
-                placeholder="Enter 10-digit mobile number"
+                placeholder="Phone Number"
+                placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
                 maxLength={10}
                 returnKeyType="next"
               />
             </View>
-
-            <Text style={styles.label}>Create Password</Text>
-            <View style={styles.passwordContainer}>
+            {/* Password */}
+            <View style={styles.inputContainer}>
+              <Lock size={20} color="#6B7280" style={styles.inputIcon} />
               <TextInput
-                style={styles.passwordInput}
+                style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter password (min 6 characters)"
+                placeholder="Password"
+                placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showPassword}
                 returnKeyType="next"
               />
@@ -112,17 +137,18 @@ export default function SignUpScreen() {
                 )}
               </TouchableOpacity>
             </View>
-
-            <Text style={styles.label}>Confirm Password</Text>
-            <View style={styles.passwordContainer}>
+            {/* Confirm Password */}
+            <View style={styles.inputContainer}>
+              <Lock size={20} color="#6B7280" style={styles.inputIcon} />
               <TextInput
-                style={styles.passwordInput}
+                style={styles.input}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="Re-enter your password"
+                placeholder="Confirm Password"
+                placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showConfirmPassword}
                 returnKeyType="done"
-                onSubmitEditing={handleSendOTP}
+                onSubmitEditing={handleCreateAccount}
               />
               <TouchableOpacity 
                 style={styles.eyeButton}
@@ -138,32 +164,36 @@ export default function SignUpScreen() {
 
             <TouchableOpacity 
               style={[styles.primaryButton, isLoading && styles.disabledButton]} 
-              onPress={handleSendOTP}
+              onPress={handleCreateAccount}
               disabled={isLoading}
             >
-              <UserPlus size={20} color="#FFFFFF" />
               <Text style={styles.primaryButtonText}>
-                {isLoading ? 'Sending OTP...' : 'Send OTP'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Text>
-              <ArrowRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity 
-                onPress={() => router.back()}
-                style={styles.loginButton}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.loginLink}>Sign In</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.termsText}>
+              By creating an account, you agree to our{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL('https://example.com/terms')}>Terms of Service</Text> and{' '}
+              <Text style={styles.link} onPress={() => Linking.openURL('https://example.com/privacy')}>Privacy Policy</Text>
+            </Text>
           </View>
 
-          <View style={styles.securityNote}>
-            <Text style={styles.securityText}>
-              🔒 Your information is secure and will be used only for verification
-            </Text>
+          <View style={styles.orDividerContainer}>
+            <View style={styles.orDivider} />
+            <Text style={styles.orText}>or</Text>
+            <View style={styles.orDivider} />
+          </View>
+
+          <View style={styles.loginContainerBottom}>
+            <Text style={styles.loginText}>Already have an account? </Text>
+            <TouchableOpacity 
+              onPress={() => router.back()}
+              style={styles.loginButton}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.loginLink}>Sign In</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -178,39 +208,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 40,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     minHeight: '100%',
-  },
-  backButton: {
-    marginBottom: 32,
-    padding: 8,
-    alignSelf: 'flex-start',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#EBF8FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    marginBottom: 32,
+    marginTop: 0,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
@@ -222,87 +234,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: 16,
   },
-  label: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-    marginBottom: 12,
-  },
-  phoneContainer: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    marginBottom: 24,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+    paddingHorizontal: 12,
   },
-  countryCodeContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
+  inputIcon: {
+    marginRight: 8,
   },
-  countryCode: {
-    fontSize: 16,
-    fontFamily: 'Inter-SemiBold',
-    color: '#374151',
-  },
-  phoneInput: {
+  input: {
     flex: 1,
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#374151',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  passwordInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#374151',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
+    paddingVertical: 16,
   },
   eyeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 18,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   primaryButton: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#3B82F6',
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginBottom: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 16,
     shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    gap: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
   },
   primaryButtonText: {
     fontSize: 16,
@@ -312,39 +286,53 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
-  loginContainer: {
+  termsText: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  link: {
+    color: '#3B82F6',
+    textDecorationLine: 'underline',
+  },
+  orDividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    justifyContent: 'center',
+  },
+  orDivider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 8,
+  },
+  orText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontFamily: 'Inter-Regular',
+  },
+  loginContainerBottom: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginTop: 8,
   },
   loginText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
   },
   loginButton: {
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   loginLink: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter-SemiBold',
     color: '#3B82F6',
     textDecorationLine: 'underline',
-  },
-  securityNote: {
-    backgroundColor: '#F0FDF4',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-  },
-  securityText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
-    color: '#166534',
-    textAlign: 'center',
   },
 });

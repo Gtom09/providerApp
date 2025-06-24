@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { MessageSquare, ArrowLeft, Smartphone, CircleCheck as CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, ShieldCheck, CheckCircle, Shield } from 'lucide-react-native';
 import { SafeView } from '@/components/SafeView';
 import { useAuth } from '@/context/AuthContext';
 
 export default function OTPVerification() {
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const [isLoading, setIsLoading] = useState(false);
+  const inputRefs = useRef<Array<TextInput | null>>([]);
   const router = useRouter();
   const { phone, password, isNewUser } = useLocalSearchParams();
   const { login } = useAuth();
@@ -17,38 +18,42 @@ export default function OTPVerification() {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
+  const handleOtpChange = (value: string, idx: number) => {
+    if (/^\d?$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[idx] = value;
+      setOtp(newOtp);
+      if (value && idx < 5) {
+        inputRefs.current[idx + 1]?.focus?.();
+      }
+      if (!value && idx > 0) {
+        inputRefs.current[idx - 1]?.focus?.();
+      }
+    }
+  };
+
   const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 6) {
       Alert.alert('Invalid OTP', 'Please enter a valid 6-digit OTP');
       return;
     }
-
     setIsLoading(true);
-
-    // Simulate OTP verification
     setTimeout(async () => {
       setIsLoading(false);
-      
       if (isNewUser === 'true') {
-        // New user - show terms and conditions
-        router.push({
-          pathname: '/auth/terms',
-          params: { phone, password }
-        });
+        router.push({ pathname: '/auth/terms', params: { phone, password } });
       } else {
-        // Existing user - direct login
         const userData = {
           id: Date.now().toString(),
           phone: phone as string,
           aadharNumber: '',
           isAdmin: false,
-          registeredServices: ['plumber', 'engineer-interior'], // Simulate existing services
+          registeredServices: ['plumber', 'engineer-interior'],
         };
-        
         await login(userData);
         router.replace('/(tabs)');
       }
@@ -74,60 +79,65 @@ export default function OTPVerification() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#374151" />
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Smartphone size={48} color="#3B82F6" />
-            </View>
-            <Text style={styles.title}>Verify Mobile Number</Text>
-            <Text style={styles.subtitle}>
-              Enter the 6-digit verification code sent to
-            </Text>
-            <Text style={styles.phoneNumber}>+91 {phone}</Text>
+          <View style={styles.topBar}>
+            <View style={{ width: 32 }} />
+            <Text style={styles.screenTitle}>Mobile Number Verification</Text>
+            <View style={{ width: 32 }} />
           </View>
 
-          <View style={styles.form}>
-            <Text style={styles.label}>Verification Code</Text>
-            <TextInput
-              style={styles.otpInput}
-              value={otp}
-              onChangeText={setOtp}
-              placeholder="000000"
-              keyboardType="numeric"
-              maxLength={6}
-              textAlign="center"
-              autoFocus={false}
-              returnKeyType="done"
-            />
-
-            <TouchableOpacity 
-              style={[styles.primaryButton, isLoading && styles.disabledButton]} 
-              onPress={handleVerifyOTP}
-              disabled={isLoading}
-            >
-              <CheckCircle size={20} color="#FFFFFF" />
-              <Text style={styles.primaryButtonText}>
-                {isLoading ? 'Verifying...' : 'Verify OTP'}
+          <View style={styles.cardWrapper}>
+            <View style={styles.card}>
+              <View style={styles.iconContainer}>
+                <Shield size={48} color="#3B82F6" />
+              </View>
+              <Text style={styles.cardTitle}>Verify Your Identity</Text>
+              <Text style={styles.cardSubtitle}>
+                Please enter your OTP sent to +{phone}
               </Text>
-            </TouchableOpacity>
-
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>Didn't receive the code? </Text>
+              <View style={styles.successBox}>
+                <CheckCircle size={20} color="#22C55E" />
+                <Text style={styles.successText}>OTP sent successfully!</Text>
+              </View>
+              <Text style={styles.otpLabel}>Enter 6-digit OTP</Text>
+              <View style={styles.otpBoxesContainer}>
+                {otp.map((digit, idx) => (
+                  <TextInput
+                    key={idx}
+                    ref={ref => { inputRefs.current[idx] = ref; }}
+                    style={styles.otpBox}
+                    value={digit}
+                    onChangeText={value => handleOtpChange(value, idx)}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    returnKeyType="done"
+                    autoFocus={idx === 0}
+                  />
+                ))}
+              </View>
               <TouchableOpacity onPress={handleResendOTP} disabled={timer > 0}>
-                <Text style={[styles.resendButton, timer > 0 && styles.resendDisabled]}>
-                  {timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
+                <Text style={[styles.resendText, timer > 0 && styles.resendDisabled]}>
+                  {timer > 0 ? `Resend OTP in ${timer}s` : 'Resend OTP'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.primaryButton, isLoading && styles.disabledButton]} 
+                onPress={handleVerifyOTP}
+                disabled={isLoading}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {isLoading ? 'Verifying...' : 'Verify & Continue'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <View style={styles.securityNote}>
-            <Text style={styles.securityText}>
-              🔒 Your phone number is secure and will only be used for verification
-            </Text>
+          <View style={styles.securityNoteWrapper}>
+            <View style={styles.securityNote}>
+              <ShieldCheck size={16} color="#64748B" style={{ marginRight: 6 }} />
+              <Text style={styles.securityText}>
+                Your number is encrypted and secure
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -141,95 +151,134 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 16,
     justifyContent: 'center',
     minHeight: '100%',
   },
-  backButton: {
-    marginBottom: 32,
-    padding: 8,
-    alignSelf: 'flex-start',
-  },
-  header: {
+  topBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 48,
+    marginTop: 16,
+    marginBottom: 16,
+    gap: 8,
+  },
+  screenTitle: {
+    fontSize: 20,
+    fontFamily: 'Inter-Bold',
+    color: '#1F2937',
+    flex: 1,
+    textAlign: 'center',
+  },
+  cardWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 0,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#EBF8FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 28,
+  cardTitle: {
+    fontSize: 22,
     fontFamily: 'Inter-Bold',
     color: '#1F2937',
-    marginBottom: 12,
+    marginBottom: 4,
     textAlign: 'center',
   },
-  subtitle: {
-    fontSize: 16,
+  cardSubtitle: {
+    fontSize: 15,
     fontFamily: 'Inter-Regular',
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  phoneNumber: {
-    fontSize: 18,
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+  },
+  successText: {
+    color: '#22C55E',
+    fontSize: 15,
     fontFamily: 'Inter-SemiBold',
-    color: '#3B82F6',
+    marginLeft: 8,
   },
-  form: {
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 16,
+  otpLabel: {
+    fontSize: 15,
     fontFamily: 'Inter-SemiBold',
     color: '#374151',
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
   },
-  otpInput: {
-    fontSize: 32,
+  otpBoxesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  otpBox: {
+    width: 44,
+    height: 48,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    fontSize: 22,
     fontFamily: 'Inter-Bold',
     color: '#374151',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 20,
-    marginBottom: 32,
-    letterSpacing: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    textAlign: 'center',
+  },
+  resendText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#3B82F6',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  resendDisabled: {
+    color: '#9CA3AF',
   },
   primaryButton: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#3B82F6',
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginBottom: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 4,
+    marginBottom: 0,
+    width: '100%',
     shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    gap: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
   },
   primaryButtonText: {
     fontSize: 16,
@@ -239,36 +288,23 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
-  resendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  securityNoteWrapper: {
     alignItems: 'center',
-  },
-  resendText: {
-    fontSize: 14,
-    fontFamily: 'Inter-Regular',
-    color: '#6B7280',
-  },
-  resendButton: {
-    fontSize: 14,
-    fontFamily: 'Inter-SemiBold',
-    color: '#3B82F6',
-  },
-  resendDisabled: {
-    color: '#9CA3AF',
+    marginTop: 8,
   },
   securityNote: {
-    backgroundColor: '#F0FDF4',
-    padding: 16,
-    borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
+    backgroundColor: '#F1F5F9',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    justifyContent: 'center',
   },
   securityText: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter-Medium',
-    color: '#166534',
+    color: '#64748B',
     textAlign: 'center',
   },
 });

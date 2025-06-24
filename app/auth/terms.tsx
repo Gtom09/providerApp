@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     backgroundColor: '#FFFFFF',
@@ -163,7 +163,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 24,
   },
   iconContainer: {
     alignItems: 'center',

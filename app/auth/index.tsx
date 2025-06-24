@@ -178,26 +178,7 @@ export default function AuthScreen() {
             <Text style={styles.adminHintText}>Password: admin123</Text>
           </View>
 
-          <View style={styles.features}>
-            <View style={styles.feature}>
-              <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>🔒</Text>
-              </View>
-              <Text style={styles.featureText}>Secure Login</Text>
-            </View>
-            <View style={styles.feature}>
-              <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>✅</Text>
-              </View>
-              <Text style={styles.featureText}>Verified Platform</Text>
-            </View>
-            <View style={styles.feature}>
-              <View style={styles.featureIcon}>
-                <Text style={styles.featureEmoji}>💰</Text>
-              </View>
-              <Text style={styles.featureText}>Earn More</Text>
-            </View>
-          </View>
+          
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeView>
