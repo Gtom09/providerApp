@@ -13,7 +13,8 @@ export const SERVICE_CATEGORIES = [
     icon: '🔧',
     description: 'Plumbing and Water Related Services',
     basePrice: 99,
-    imageUrl: 'https://images.pexels.com/photos/8486944/pexels-photo-8486944.jpeg?auto=compress&cs=tinysrgb&w=400',
+    imageUrl: 'https://media.istockphoto.com/id/1516511531/photo/a-plumber-carefully-fixes-a-leak-in-a-sink-using-a-wrench.jpg?auto=compress&cs=tinysrgb&w=400',
+
   },
   {
     id: 'granite-tiles',

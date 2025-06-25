@@ -90,7 +90,7 @@ export default function ServicesScreen() {
         <View style={styles.servicesList}>
           {registeredServices.map((service) => {
             const serviceStatus = serviceStatuses.find(s => s.id === service.id);
-            const status = serviceStatus?.status || 'pending';
+            const status = serviceStatus?.status || 'verified';
             const statusInfo = getStatusInfo(status);
             const StatusIcon = statusInfo.icon;
 

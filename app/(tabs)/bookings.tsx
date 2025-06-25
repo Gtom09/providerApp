@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, TextInput, Pressable, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Calendar, Clock, MapPin, Phone, CircleCheck as CheckCircle, Circle as XCircle, User } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Phone, CircleCheck as CheckCircle, Circle as XCircle, User, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Booking {
@@ -25,6 +25,23 @@ export default function BookingsScreen() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'completed'>('all');
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectBookingId, setRejectBookingId] = useState<string | null>(null);
+  const [customOtherReason, setCustomOtherReason] = useState('');
+  const cancelReasons = [
+    'Change of plans',
+    'Found another provider',
+    'Service no longer needed',
+    'Price concerns',
+    'Schedule conflict',
+    'Other',
+  ];
+  const isOther = rejectReason === 'Other';
+  const canSubmit = (rejectReason && rejectReason !== 'Other') || (isOther && customOtherReason.trim());
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportBooking, setReportBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     loadBookings();
@@ -83,22 +100,18 @@ export default function BookingsScreen() {
   };
 
   const generateMockBooking = async () => {
-    if (user?.registeredServices.length === 0) return;
-
-    const customerNames = ['Rahul Verma', 'Neha Gupta', 'Vikash Yadav', 'Pooja Jain', 'Arjun Singh'];
-    const addresses = ['Koramangala, Bangalore', 'Cyber City, Gurgaon', 'Bandra East, Mumbai', 'Salt Lake, Kolkata', 'Jubilee Hills, Hyderabad'];
-    
+    if (!user || !user.registeredServices?.length) return;
     const randomServiceId = user.registeredServices[Math.floor(Math.random() * user.registeredServices.length)];
     const service = SERVICE_CATEGORIES.find(s => s.id === randomServiceId);
     
     if (service) {
       const newBooking: Booking = {
         id: `booking_${Date.now()}`,
-        customerName: customerNames[Math.floor(Math.random() * customerNames.length)],
+        customerName: 'Rahul Verma',
         customerPhone: `+91 ${9000000000 + Math.floor(Math.random() * 999999999)}`,
         serviceId: service.id,
         serviceName: service.name,
-        address: addresses[Math.floor(Math.random() * addresses.length)],
+        address: 'Koramangala, Bangalore',
         scheduledDate: new Date(Date.now() + Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         scheduledTime: ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM', '6:00 PM'][Math.floor(Math.random() * 5)],
         status: 'pending',
@@ -113,16 +126,53 @@ export default function BookingsScreen() {
     }
   };
 
-  const handleBookingAction = async (bookingId: string, action: 'accept' | 'reject') => {
+  const handleBookingAction = async (bookingId: string, action: 'accept' | 'reject', reason?: string) => {
     const updatedBookings = bookings.map(booking => {
       if (booking.id === bookingId) {
-        return { ...booking, status: action === 'accept' ? 'accepted' as const : 'rejected' as const };
+        return {
+          ...booking,
+          status: action === 'accept' ? 'accepted' as const : 'rejected' as const,
+          cancelReason: action === 'reject' ? reason : undefined,
+        };
       }
       return booking;
     });
-    
     setBookings(updatedBookings);
     await AsyncStorage.setItem(`bookings_${user?.id}`, JSON.stringify(updatedBookings));
+  };
+
+  const openRejectModal = (bookingId: string) => {
+    setRejectBookingId(bookingId);
+    setRejectReason('');
+    setCustomOtherReason('');
+    setRejectModalVisible(true);
+  };
+
+  const handleRejectSubmit = async () => {
+    let reason = rejectReason;
+    if (isOther) reason = customOtherReason;
+    if (!reason.trim()) return;
+    if (rejectBookingId) {
+      await handleBookingAction(rejectBookingId, 'reject', reason);
+    }
+    setRejectModalVisible(false);
+    setRejectBookingId(null);
+    setRejectReason('');
+    setCustomOtherReason('');
+  };
+
+  const openReportModal = (item: Booking) => {
+    setReportBooking(item);
+    setReportReason('');
+    setReportModalVisible(true);
+  };
+
+  const handleReportSubmit = () => {
+    // Placeholder: send reportReason and reportBooking
+    setReportModalVisible(false);
+    setReportBooking(null);
+    setReportReason('');
+    Alert.alert('Reported', 'User has been reported. Thank you for your feedback.');
   };
 
   const filteredBookings = bookings.filter(booking => {
@@ -146,6 +196,10 @@ export default function BookingsScreen() {
       case 'completed': return CheckCircle;
       default: return Clock;
     }
+  };
+
+  const handleReportUser = (item: Booking) => {
+    Alert.alert('Report User', `Report user for booking with ${item.customerName}? (Feature coming soon)`);
   };
 
   const renderBooking = ({ item }: { item: Booking }) => {
@@ -181,11 +235,6 @@ export default function BookingsScreen() {
             <MapPin size={16} color="#6B7280" />
             <Text style={styles.detailText}>{item.address}</Text>
           </View>
-          
-          <View style={styles.detailRow}>
-            <Phone size={16} color="#6B7280" />
-            <Text style={styles.detailText}>{item.customerPhone}</Text>
-          </View>
         </View>
 
         <Text style={styles.description}>{item.description}</Text>
@@ -200,16 +249,31 @@ export default function BookingsScreen() {
               <CheckCircle size={16} color="#FFFFFF" />
               <Text style={styles.acceptButtonText}>Accept</Text>
             </TouchableOpacity>
-            
             <TouchableOpacity 
               style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleBookingAction(item.id, 'reject')}
+              onPress={() => openRejectModal(item.id)}
             >
               <XCircle size={16} color="#FFFFFF" />
               <Text style={styles.rejectButtonText}>Reject</Text>
             </TouchableOpacity>
           </View>
         )}
+        {item.status === 'accepted' && (
+          <TouchableOpacity
+            style={styles.callButton}
+            onPress={() => Linking.openURL(`tel:${item.customerPhone}`)}
+          >
+            <Phone size={18} color="#fff" />
+            <Text style={styles.callButtonText}>Call</Text>
+          </TouchableOpacity>
+        )}
+        {/* Report User option */}
+        <View style={styles.reportUserRow}>
+          <TouchableOpacity style={styles.reportUserBtn} onPress={() => openReportModal(item)}>
+            <AlertTriangle size={16} color="#EF4444" style={{ marginRight: 4 }} />
+            <Text style={styles.reportUserText}>Report User</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -267,6 +331,101 @@ export default function BookingsScreen() {
           </View>
         }
       />
+
+      {/* Reject Reason Modal */}
+      <Modal
+        visible={rejectModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRejectModalVisible(false)}
+      >
+        <Pressable style={styles.cancelModalOverlay} onPress={() => setRejectModalVisible(false)}>
+          <Pressable style={styles.cancelModalSheet} onPress={() => {}}>
+            <View style={styles.cancelModalHeader}>
+              <TouchableOpacity onPress={() => setRejectModalVisible(false)}>
+                <Text style={styles.cancelModalClose}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.cancelModalTitle}>Cancel Booking</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            <Text style={styles.cancelModalSubtitle}>Why are you cancelling?</Text>
+            <Text style={styles.cancelModalHelper}>Please select a reason to help us improve our service</Text>
+            <View style={styles.cancelReasonsList}>
+              {cancelReasons.map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[styles.cancelReasonCard, (rejectReason === reason) && styles.cancelReasonCardSelected]}
+                  onPress={() => setRejectReason(reason)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.radioOuter}>
+                    {rejectReason === reason && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={styles.cancelReasonText}>{reason}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {isOther && (
+              <View style={styles.cancelOtherInputBox}>
+                <Text style={styles.cancelOtherLabel}>Please specify your reason</Text>
+                <TextInput
+                  style={styles.cancelOtherInput}
+                  placeholder="Type your reason here..."
+                  value={customOtherReason}
+                  onChangeText={setCustomOtherReason}
+                  multiline
+                />
+              </View>
+            )}
+            <View style={styles.cancelModalActionsRow}>
+              <TouchableOpacity style={styles.cancelModalActionBtn} onPress={() => setRejectModalVisible(false)}>
+                <Text style={styles.cancelModalActionText}>Keep Booking</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.cancelModalActionBtn, styles.cancelModalActionDanger, !canSubmit && { opacity: 0.5 }]}
+                onPress={handleRejectSubmit}
+                disabled={!canSubmit}
+              >
+                <Text style={[styles.cancelModalActionText, styles.cancelModalActionDangerText]}>Confirm Cancellation</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Report User Modal */}
+      <Modal
+        visible={reportModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setReportModalVisible(false)}
+      >
+        <Pressable style={styles.reportModalOverlay} onPress={() => setReportModalVisible(false)}>
+          <Pressable style={styles.reportModalContent} onPress={() => {}}>
+            <Text style={styles.reportModalTitle}>Report User</Text>
+            <Text style={styles.reportModalDesc}>Please describe the issue with this user. Your report will be reviewed confidentially.</Text>
+            <TextInput
+              style={styles.reportModalInput}
+              placeholder="Type your reason here..."
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+            />
+            <View style={styles.reportModalActionsRow}>
+              <TouchableOpacity style={styles.reportModalActionBtn} onPress={() => setReportModalVisible(false)}>
+                <Text style={styles.reportModalActionText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.reportModalActionBtn, styles.reportModalActionDanger, !reportReason.trim() && { opacity: 0.5 }]}
+                onPress={handleReportSubmit}
+                disabled={!reportReason.trim()}
+              >
+                <Text style={[styles.reportModalActionText, styles.reportModalActionDangerText]}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -456,5 +615,239 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-Regular',
     color: '#9CA3AF',
+  },
+  cancelModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'flex-end',
+  },
+  cancelModalSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 32,
+    minHeight: 420,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cancelModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  cancelModalClose: {
+    fontSize: 22,
+    color: '#6B7280',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  cancelModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E293B',
+    flex: 1,
+    textAlign: 'center',
+  },
+  cancelModalSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 2,
+    marginTop: 8,
+  },
+  cancelModalHelper: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  cancelReasonsList: {
+    marginBottom: 8,
+  },
+  cancelReasonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  cancelReasonCardSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EEF2FF',
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    backgroundColor: '#fff',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#3B82F6',
+  },
+  cancelReasonText: {
+    fontSize: 15,
+    color: '#1E293B',
+    fontWeight: '500',
+  },
+  cancelOtherInputBox: {
+    marginBottom: 12,
+  },
+  cancelOtherLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  cancelOtherInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 10,
+    width: '100%',
+    minHeight: 48,
+    fontSize: 15,
+    color: '#1E293B',
+    backgroundColor: '#F9FAFB',
+  },
+  cancelModalActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 8,
+  },
+  cancelModalActionBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  cancelModalActionDanger: {
+    backgroundColor: '#FECACA',
+  },
+  cancelModalActionText: {
+    color: '#9CA3AF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  cancelModalActionDangerText: {
+    color: '#EF4444',
+    fontWeight: '700',
+  },
+  callButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 10,
+    marginTop: 10,
+    gap: 8,
+  },
+  callButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  reportUserRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  reportUserBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    backgroundColor: '#fff',
+  },
+  reportUserText: {
+    color: '#EF4444',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  reportModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reportModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 340,
+    alignItems: 'stretch',
+    elevation: 8,
+  },
+  reportModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  reportModalDesc: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  reportModalInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 10,
+    minHeight: 60,
+    fontSize: 15,
+    color: '#1E293B',
+    backgroundColor: '#F9FAFB',
+    marginBottom: 14,
+  },
+  reportModalActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  reportModalActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  reportModalActionDanger: {
+    backgroundColor: '#FECACA',
+  },
+  reportModalActionText: {
+    color: '#9CA3AF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  reportModalActionDangerText: {
+    color: '#EF4444',
+    fontWeight: '700',
   },
 });
