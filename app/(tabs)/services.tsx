@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { SERVICE_CATEGORIES } from '@/constants/serviceCategories';
-import { Edit, Eye, Clock, CheckCircle, XCircle } from 'lucide-react-native';
+import { Edit, Eye, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ServiceStatus {
@@ -60,6 +60,30 @@ export default function ServicesScreen() {
     user?.registeredServices.includes(service.id)
   );
 
+  const handleCancelLabor = async () => {
+    // Confirm and remove 'labor' from registeredServices
+    Alert.alert(
+      'Cancel Labor Service',
+      'Are you sure you want to cancel your Labor service registration?',
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Yes', style: 'destructive', onPress: async () => {
+            // Remove 'labor' from registeredServices
+            const updated = user?.registeredServices.filter(id => id !== 'labor') || [];
+            // Simulate update (replace with real updateUser logic if available)
+            if (user) {
+              user.registeredServices = updated;
+            }
+            // Optionally, update AsyncStorage or context here
+            // Reload the screen
+            loadServiceStatuses();
+          }
+        }
+      ]
+    );
+  };
+
   if (registeredServices.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
@@ -114,21 +138,31 @@ export default function ServicesScreen() {
                 </View>
 
                 <View style={styles.serviceActions}>
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/service-registration/${service.id}?mode=view`)}
-                  >
-                    <Eye size={16} color="#6B7280" />
-                    <Text style={styles.actionButtonText}>View</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.actionButton}
-                    onPress={() => router.push(`/service-registration/${service.id}?mode=edit`)}
-                  >
-                    <Edit size={16} color="#3B82F6" />
-                    <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Edit</Text>
-                  </TouchableOpacity>
+                  <View style={styles.actionButtonRow}>
+                    <TouchableOpacity 
+                      style={styles.actionButton}
+                      onPress={() => router.push(`/service-registration/${service.id}?mode=view`)}
+                    >
+                      <Eye size={16} color="#6B7280" />
+                      <Text style={styles.actionButtonText}>View</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.actionButton}
+                      onPress={() => router.push(`/service-registration/${service.id}?mode=edit`)}
+                    >
+                      <Edit size={16} color="#3B82F6" />
+                      <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Edit</Text>
+                    </TouchableOpacity>
+                    {service.id === 'labor' && (
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.cancelLaborButton]}
+                        onPress={handleCancelLabor}
+                      >
+                        <Trash2 size={16} color="#EF4444" />
+                        <Text style={[styles.actionButtonText, { color: '#EF4444' }]}>Cancel</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
               </View>
             );
@@ -219,23 +253,39 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   serviceActions: {
+    marginTop: 8,
+  },
+  actionButtonRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
+    flexWrap: 'nowrap',
+    gap: 8,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
     borderRadius: 8,
-    backgroundColor: '#F9FAFB',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginRight: 0,
+    marginBottom: 0,
+  },
+  cancelLaborButton: {
+    borderColor: '#FECACA',
+    backgroundColor: '#FFF0F0',
+    marginLeft: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    minWidth: 0,
+    height: undefined,
   },
   actionButtonText: {
     fontSize: 14,
     fontFamily: 'Inter-Medium',
-    color: '#6B7280',
+    color: '#374151',
     marginLeft: 6,
+    paddingRight: 0,
+    paddingLeft: 0,
   },
   emptyState: {
     flex: 1,

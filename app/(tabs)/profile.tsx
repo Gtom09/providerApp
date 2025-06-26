@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
-import { User, Phone, MapPin, LogOut, CreditCard as Edit, Bell, Shield, Globe, Palette, Volume2, CircleHelp as HelpCircle, FileText, Star, Settings, Award, TrendingUp, Calendar, CreditCard, TriangleAlert as AlertTriangle } from 'lucide-react-native';
+import { User, Phone, MapPin, LogOut, CreditCard as Edit, Bell, Shield, Globe, Palette, Volume2, CircleHelp as HelpCircle, FileText, Star, Settings, Award, TrendingUp, Calendar, CreditCard, TriangleAlert as AlertTriangle, Trash2 } from 'lucide-react-native';
 import { SafeView } from '@/components/SafeView';
 
 export default function ProfileScreen() {
@@ -24,6 +24,29 @@ export default function ProfileScreen() {
               router.replace('/auth');
             } catch (error) {
               Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              Alert.alert('Account Deleted', 'Your account has been deleted.');
+              router.replace('/auth');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete account. Please try again.');
             }
           }
         }
@@ -317,6 +340,10 @@ export default function ProfileScreen() {
             <LogOut size={20} color="#EF4444" />
             <Text style={styles.logoutButtonText}>Logout</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+            <Trash2 size={20} color="#EF4444" style={{ marginRight: 10 }} />
+            <Text style={styles.deleteButtonText}>Delete Account</Text>
+          </TouchableOpacity>
         </View>
 
         {/* App Info */}
@@ -507,6 +534,28 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#EF4444',
     marginLeft: 8,
+  },
+  deleteButton: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff0f0',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    paddingVertical: 16,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  deleteButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    letterSpacing: 0.2,
   },
   appInfo: {
     alignItems: 'center',

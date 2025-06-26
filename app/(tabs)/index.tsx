@@ -47,7 +47,8 @@ export default function HomeScreen() {
   const [location, setLocation] = useState('147, 12th cross, Rachenahalli, Yelahanka, Beng...');
   const [modalVisible, setModalVisible] = useState(false);
   const [addressModalVisible, setAddressModalVisible] = useState(false);
-  const [customAddress, setCustomAddress] = useState('');
+  const [newLocationName, setNewLocationName] = useState('');
+  const [newLocationAddress, setNewLocationAddress] = useState('');
   const [savedLocations, setSavedLocations] = useState([
     { label: 'Home', address: '147, 12th cross, Rachenahalli, Yelahanka, Beng...', type: 'home' },
     { label: 'Office', address: 'Tech Park, Whitefield, Bengaluru', type: 'office' },
@@ -90,22 +91,25 @@ export default function HomeScreen() {
 
   const handleSaveAddress = () => {
     setModalVisible(false);
+    setNewLocationName('');
+    setNewLocationAddress('');
     setAddressModalVisible(true);
   };
 
   const handleAddressSubmit = () => {
-    if (customAddress.trim()) {
-      setSavedLocations((prev) => [
-        ...prev,
-        { label: `Address ${prev.length}`, address: customAddress, type: `custom${prev.length}` },
-      ]);
-      setLocation(customAddress);
-      setSelectedLocation(`custom${savedLocations.length}`);
-      setCustomAddress('');
-      setAddressModalVisible(false);
-    } else {
-      Alert.alert('Invalid Address', 'Please enter a valid address.');
+    if (!newLocationName.trim() || !newLocationAddress.trim()) {
+      Alert.alert('Invalid Address', 'Please enter both a location name and address.');
+      return;
     }
+    setSavedLocations((prev) => [
+      ...prev,
+      { label: newLocationName, address: newLocationAddress, type: `custom${prev.length}` },
+    ]);
+    setLocation(newLocationAddress);
+    setSelectedLocation(`custom${savedLocations.length}`);
+    setNewLocationName('');
+    setNewLocationAddress('');
+    setAddressModalVisible(false);
   };
 
   const handleSelectLocation = (loc: any) => {
@@ -232,23 +236,39 @@ export default function HomeScreen() {
       <Modal
         visible={addressModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setAddressModalVisible(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setAddressModalVisible(false)}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enter Address</Text>
+        <Pressable style={styles.bottomSheetOverlay} onPress={() => setAddressModalVisible(false)}>
+          <Pressable style={styles.addLocationSheet} onPress={() => {}}>
+            <View style={styles.addLocationHeader}>
+              <Text style={styles.addLocationTitle}>Add New Location</Text>
+              <TouchableOpacity onPress={() => setAddressModalVisible(false)}>
+                <Text style={styles.addLocationClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.addLocationLabel}>Location Name</Text>
             <TextInput
-              style={styles.addressInput}
-              placeholder="Enter your address"
-              value={customAddress}
-              onChangeText={setCustomAddress}
-              autoFocus
+              style={styles.addLocationInput}
+              placeholder="e.g., Home, Office"
+              value={newLocationName}
+              onChangeText={setNewLocationName}
             />
-            <TouchableOpacity style={styles.modalButton} onPress={handleAddressSubmit}>
-              <Text style={styles.modalButtonText}>Save</Text>
+            <Text style={styles.addLocationLabel}>Address</Text>
+            <TextInput
+              style={[styles.addLocationInput, { minHeight: 48 }]}
+              placeholder="Enter full address"
+              value={newLocationAddress}
+              onChangeText={setNewLocationAddress}
+              multiline
+            />
+            <TouchableOpacity
+              style={styles.saveLocationBtn}
+              onPress={handleAddressSubmit}
+            >
+              <Text style={styles.saveLocationBtnText}>Save Location</Text>
             </TouchableOpacity>
-          </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </SafeAreaView>
@@ -537,5 +557,67 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 2,
     elevation: 2,
+  },
+  addLocationSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 32,
+    minHeight: 320,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 8,
+    width: '100%',
+  },
+  addLocationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  addLocationTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  addLocationClose: {
+    fontSize: 22,
+    color: '#6B7280',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  addLocationLabel: {
+    fontSize: 14,
+    color: '#1E293B',
+    fontWeight: '600',
+    marginBottom: 6,
+    marginTop: 8,
+  },
+  addLocationInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#1E293B',
+    backgroundColor: '#F9FAFB',
+    marginBottom: 8,
+  },
+  saveLocationBtn: {
+    backgroundColor: '#2563EB',
+    borderRadius: 10,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  saveLocationBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
 });

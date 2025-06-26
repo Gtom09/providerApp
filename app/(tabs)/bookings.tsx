@@ -39,9 +39,19 @@ export default function BookingsScreen() {
   ];
   const isOther = rejectReason === 'Other';
   const canSubmit = (rejectReason && rejectReason !== 'Other') || (isOther && customOtherReason.trim());
+  const [customReportOtherReason, setCustomReportOtherReason] = useState('');
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportBooking, setReportBooking] = useState<Booking | null>(null);
+  const reportReasons = [
+    'Abusive language',
+    'Fraudulent activity',
+    'No show',
+    'Payment issue',
+    'Other',
+  ];
+  const isReportOther = reportReason === 'Other';
+  const canReportSubmit = (reportReason && reportReason !== 'Other') || (isReportOther && customReportOtherReason.trim());
 
   useEffect(() => {
     loadBookings();
@@ -164,14 +174,18 @@ export default function BookingsScreen() {
   const openReportModal = (item: Booking) => {
     setReportBooking(item);
     setReportReason('');
+    setCustomReportOtherReason('');
     setReportModalVisible(true);
   };
 
   const handleReportSubmit = () => {
-    // Placeholder: send reportReason and reportBooking
+    let reason = reportReason;
+    if (isReportOther) reason = customReportOtherReason;
+    if (!reason.trim()) return;
     setReportModalVisible(false);
     setReportBooking(null);
     setReportReason('');
+    setCustomReportOtherReason('');
     Alert.alert('Reported', 'User has been reported. Thank you for your feedback.');
   };
 
@@ -397,30 +411,57 @@ export default function BookingsScreen() {
       <Modal
         visible={reportModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setReportModalVisible(false)}
       >
-        <Pressable style={styles.reportModalOverlay} onPress={() => setReportModalVisible(false)}>
-          <Pressable style={styles.reportModalContent} onPress={() => {}}>
-            <Text style={styles.reportModalTitle}>Report User</Text>
-            <Text style={styles.reportModalDesc}>Please describe the issue with this user. Your report will be reviewed confidentially.</Text>
-            <TextInput
-              style={styles.reportModalInput}
-              placeholder="Type your reason here..."
-              value={reportReason}
-              onChangeText={setReportReason}
-              multiline
-            />
-            <View style={styles.reportModalActionsRow}>
-              <TouchableOpacity style={styles.reportModalActionBtn} onPress={() => setReportModalVisible(false)}>
-                <Text style={styles.reportModalActionText}>Cancel</Text>
+        <Pressable style={styles.cancelModalOverlay} onPress={() => setReportModalVisible(false)}>
+          <Pressable style={styles.cancelModalSheet} onPress={() => {}}>
+            <View style={styles.cancelModalHeader}>
+              <TouchableOpacity onPress={() => setReportModalVisible(false)}>
+                <Text style={styles.cancelModalClose}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.cancelModalTitle}>Report User</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            <Text style={styles.cancelModalSubtitle}>Why are you reporting?</Text>
+            <Text style={styles.cancelModalHelper}>Please select a reason to help us improve our service</Text>
+            <View style={styles.cancelReasonsList}>
+              {reportReasons.map((reason) => (
+                <TouchableOpacity
+                  key={reason}
+                  style={[styles.cancelReasonCard, (reportReason === reason) && styles.cancelReasonCardSelected]}
+                  onPress={() => setReportReason(reason)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.radioOuter}>
+                    {reportReason === reason && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={styles.cancelReasonText}>{reason}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {isReportOther && (
+              <View style={styles.cancelOtherInputBox}>
+                <Text style={styles.cancelOtherLabel}>Please specify your reason</Text>
+                <TextInput
+                  style={styles.cancelOtherInput}
+                  placeholder="Type your reason here..."
+                  value={customReportOtherReason}
+                  onChangeText={setCustomReportOtherReason}
+                  multiline
+                />
+              </View>
+            )}
+            <View style={styles.cancelModalActionsRow}>
+              <TouchableOpacity style={styles.cancelModalActionBtn} onPress={() => setReportModalVisible(false)}>
+                <Text style={styles.cancelModalActionText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.reportModalActionBtn, styles.reportModalActionDanger, !reportReason.trim() && { opacity: 0.5 }]}
+                style={[styles.cancelModalActionBtn, styles.cancelModalActionDanger, !canReportSubmit && { opacity: 0.5 }]}
                 onPress={handleReportSubmit}
-                disabled={!reportReason.trim()}
+                disabled={!canReportSubmit}
               >
-                <Text style={[styles.reportModalActionText, styles.reportModalActionDangerText]}>Submit</Text>
+                <Text style={[styles.cancelModalActionText, styles.cancelModalActionDangerText]}>Submit</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -785,69 +826,5 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontSize: 13,
     fontWeight: '600',
-  },
-  reportModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reportModalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    width: '85%',
-    maxWidth: 340,
-    alignItems: 'stretch',
-    elevation: 8,
-  },
-  reportModalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  reportModalDesc: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  reportModalInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    padding: 10,
-    minHeight: 60,
-    fontSize: 15,
-    color: '#1E293B',
-    backgroundColor: '#F9FAFB',
-    marginBottom: 14,
-  },
-  reportModalActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  reportModalActionBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    marginHorizontal: 2,
-  },
-  reportModalActionDanger: {
-    backgroundColor: '#FECACA',
-  },
-  reportModalActionText: {
-    color: '#9CA3AF',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  reportModalActionDangerText: {
-    color: '#EF4444',
-    fontWeight: '700',
   },
 });

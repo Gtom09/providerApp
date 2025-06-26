@@ -12,7 +12,7 @@ export default function Index() {
     if (!isLoading) {
       if (user) {
         if (user.isAdmin) {
-          router.replace('/admin');
+          router.replace('/admin/dashboard');
         } else {
           router.replace('/(tabs)');
         }
