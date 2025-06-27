@@ -186,9 +186,6 @@ export default function HomeScreen() {
           <Text style={styles.earningLabel}>Pending</Text>
         </View>
       </View>
-      {/* <TouchableOpacity style={styles.earningCTA}>
-        <Text style={styles.earningCTAText}>View Full Earnings</Text>
-      </TouchableOpacity> */}
 
       {/* Location Modal */}
       <Modal
@@ -400,15 +397,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     marginTop: 4,
-  },
-  earningCTA: {
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  earningCTAText: {
-    color: '#3B82F6',
-    fontWeight: '600',
-    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
